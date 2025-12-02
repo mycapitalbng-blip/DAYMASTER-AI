@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DayMaster AI — Web App (Single File)</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --card:#f7f0ff;
+      --muted:#6b6b6b;
+      --accent-pink:#ff80c8;
+      --accent-blue:#80baff;
+      --accent-purple:#b388ff;
+    }
+    *{box-sizing:border-box;font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:#333;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .app{
+      width:980px;max-width:96vw;
+      background:#ffffff;
+      border-radius:16px;
+      padding:20px;
+      box-shadow:0 8px 25px rgba(0,0,0,0.08);
+      display:grid;
+      grid-template-columns:360px 1fr;
+      gap:16px;
+      border:3px solid var(--accent-purple);
+    }
+    .sidebar{
+      background:#faf6ff;
+      padding:14px;
+      border-radius:12px;
+      border:2px solid var(--accent-pink);
+    }
+    h1{margin:0;font-size:20px;color:#333}
+    .persona{
+      margin-top:12px;
+      padding:10px;
+      border-radius:10px;
+      background:linear-gradient(180deg, #ffe4f5, #f3e4ff);
+      color:#333;
+      border:1px solid var(--accent-blue);
+    }
+    .muted{color:var(--muted);font-size:13px}
+    .controls button,.btn{
+      background:linear-gradient(90deg, var(--accent-pink), var(--accent-purple));
+      border:none;color:#fff;
+      padding:8px 10px;
+      border-radius:8px;cursor:pointer;
+      box-shadow:0 3px 10px rgba(0,0,0,0.1);
+    }
+    .chatwrap{display:flex;flex-direction:column;height:68vh;background:#fff;border-radius:12px;border:2px solid var(--accent-blue)}
+    .messages{
+      flex:1;overflow:auto;padding:14px;border-radius:10px;
+      background:#f9f9ff;
+    }
+    .msg{margin-bottom:12px;max-width:78%;color:#333}
+    .msg.user{
+      align-self:flex-end;
+      background:var(--accent-pink);
+      color:#fff;
+      padding:10px;border-radius:10px 10px 4px 10px;
+    }
+    .msg.ai{
+      align-self:flex-start;
+      background:var(--accent-blue);
+      color:#fff;
+      padding:10px;border-radius:10px 10px 10px 4px;
+    }
+    .inputbar{display:flex;gap:8px;margin-top:8px}
+    .inputbar input{
+      flex:1;padding:10px;border-radius:8px;
+      border:1px solid var(--accent-purple);
+      background:#fff;color:#333;
+    }
+    .kbd{
+      background:#ffe8f7;padding:6px 8px;border-radius:6px;
+      font-size:12px;color:#d14faa;font-weight:bold;
+    }
+    .hint{font-size:13px;color:#555;margin-top:8px}
+    .small{font-size:12px;color:#777}
+    .memory-list{
+      margin-top:10px;max-height:180px;overflow:auto;padding:6px;
+      border-radius:6px;background:#fff6ff;
+      border:1px solid var(--accent-purple);
+    }
+    .mem-item{padding:6px;border-bottom:1px dashed #f3c8ff;font-size:13px;color:#333}
+    .exportimport .btn{background:linear-gradient(90deg, var(--accent-purple), var(--accent-blue))}
+    .footer{font-size:12px;color:#777;margin-top:8px}
+    @media(max-width:900px){.app{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+  <div class="app" role="application">
+    <aside class="sidebar" aria-label="controls">
+      <div class="topbar">
+        <div>
+          <h1 style="
+    background: linear-gradient(to right, #ff66b3, #a066ff, #66a3ff);
+    -webkit-background-clip: text;
+    color: transparent;
+    font-size: 36px;
+    font-weight: 700;
+">
+    🎀 DayMaster AI – Plans Your Day 🎀
+</h1>
+
+<div class="cute-box">
+    <h2>Welcome 😺✨</h2>
+    <p>Welcome to DayMaster AI! Type your commands below or explore Pomodoro, Tasks, Reminders, and Score tools 🎀💖</p>
+    <p>Example Commands:</p>
+    <ul style="text-align:left; margin:auto; width:80%;">
+        <li>✨ <b>start pomodoro</b> – begins a 25-minute timer</li>
+        <li>✨ <b>add task</b> – adds a new cute task 🐾</li>
+        <li>✨ <b>show score</b> – displays your stars ⭐</li>
+        <li>✨ <b>help</b> – shows all commands again 💗</li>
+    </ul>
+</div>
+          <div class="muted">Lightweight local AI assistant — web version</div>
+        </div>
+        <div class="kbd">Day 2</div>
+      </div>
+
+      <div class="persona">
+        <strong>Persona:</strong>
+        <div id="personaName">DayMaster — Helpful Study Coach</div>
+        <div class="muted" style="margin-top:6px">Focus: planning, reminders, study tips, short-code execution (local)</div>
+      </div>
+
+      <div style="margin-top:12px">
+        <label class="muted">Personality</label>
+        <select id="personality" style="width:100%;margin-top:6px;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:inherit">
+          <option value="coach">Coach — encouraging & structured</option>
+          <option value="strict">Strict — concise & directive</option>
+          <option value="friendly">Friendly — casual & warm</option>
+        </select>
+      </div>
+
+      <div class="controls">
+        <button id="clearChat">Clear Chat</button>
+        <button id="exportMemory">Export Memory</button>
+        <button id="importMemoryBtn">Import Memory</button>
+        <input id="fileInput" type="file" accept="application/json" style="display:none" />
+      </div>
+
+      <div class="hint">Commands: <span class="kbd">/remember key=value</span> <span class="kbd">/recall key</span> <span class="kbd">/memory</span> <span class="kbd">/clear-memory</span></div>
+
+      <div class="muted" style="margin-top:10px">Stored memory (localStorage)</div>
+      <div class="memory-list" id="memoryList"></div>
+
+      <div class="exportimport">
+        <button id="importBtn" class="btn">Load Demo Data</button>
+        <button id="resetMem" class="btn">Reset Memory</button>
+      </div>
+
+      <div class="footer">Tip: This app keeps memory only in your browser. Use export/import to backup or move it.</div>
+    
+
+      <!-- Pomodoro / Tasks / Reminders -->
+      <div style="margin-top:16px;padding:12px;background:#fff0fa;border-radius:10px;border:2px solid var(--accent-pink)">
+        <h3 style="margin:0 0 6px 0;color:#d14faa">Pomodoro Timer</h3>
+        <div id="pomoDisplay" style="font-size:24px;font-weight:bold;text-align:center;margin:8px 0;color:#b30086">25:00</div>
+        <div style="display:flex;gap:6px">
+          <button id="pomoStart" class="btn" style="flex:1">Start</button>
+          <button id="pomoStop" class="btn" style="flex:1">Stop</button>
+          <button id="pomoReset" class="btn" style="flex:1">Reset</button>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;padding:12px;background:#eaf5ff;border-radius:10px;border:2px solid var(--accent-blue)">
+        <h3 style="margin:0 0 6px 0;color:#2a72c9">Task List</h3>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <input id="taskInput" placeholder="New task..." style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--accent-blue);background:#fff">
+          <button id="addTask" class="btn" style="background:var(--accent-blue);color:#fff">Add</button>
+        </div>
+        <ul id="taskList" style="list-style:none;padding:0;margin:0;max-height:140px;overflow:auto"></ul>
+      </div>
+
+      <div style="margin-top:16px;padding:12px;background:#f5e8ff;border-radius:10px;border:2px solid var(--accent-purple)">
+        <h3 style="margin:0 0 6px 0;color:#8b4de8">Reminders</h3>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <input id="reminderText" placeholder="Reminder text" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--accent-purple);background:#fff">
+          <input id="reminderTime" type="time" style="padding:8px;border-radius:8px;border:1px solid var(--accent-purple);background:#fff">
+          <button id="addReminder" class="btn" style="background:var(--accent-purple);color:#fff">Set</button>
+        </div>
+        <ul id="reminderList" style="list-style:none;padding:0;margin:0;max-height:130px;overflow:auto"></ul>
+      </div>
+
+    </aside>
+
+    <main class="chatwrap">
+      <div class="messages" id="messages" role="log" aria-live="polite"></div>
+
+      <div class="inputbar">
+        <input id="userInput" placeholder="Ask DayMaster (type /help for commands)" autocomplete="off" />
+        <button id="send">Send</button>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ---- DayMaster AI: lightweight rule-based brain (Day 2) ----
+    const messagesEl = document.getElementById('messages');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('send');
+    const memoryList = document.getElementById('memoryList');
+    const personaSelect = document.getElementById('personality');
+
+    // Memory stored in localStorage under key 'daymaster_memory'
+    function loadMemory(){
+      try{ return JSON.parse(localStorage.getItem('daymaster_memory')||'{}'); }catch(e){return{}}}
+    function saveMemory(mem){ localStorage.setItem('daymaster_memory', JSON.stringify(mem)); renderMemory(); }
+    function renderMemory(){ const mem = loadMemory(); memoryList.innerHTML = Object.keys(mem).length?Object.entries(mem).map(([k,v])=>`<div class="mem-item"><strong>${escapeHtml(k)}</strong>: ${escapeHtml(String(v))}</div>`).join(''):'<div class="muted">— no memory yet —</div>'; }
+
+    function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+
+    // Seed some simple knowledge / skills for DayMaster
+    const seeds = {
+      'role':'Study Coach',
+      'favorite_style':'Pomodoro 25/5',
+      'greeting':'Hi! I am DayMaster — I help plan study sessions and remember quick facts for you.'
+    };
+
+    // Boot: if empty, seed
+    if(!Object.keys(loadMemory()).length){ saveMemory(seeds); }
+
+    // Very small pattern-based response engine.
+    function daymasterRespond(input){
+      const mem = loadMemory();
+      const normalized = input.trim();
+      // commands
+      if(normalized.startsWith('/')) return handleCommand(normalized);
+
+      // direct keyword responses
+      const p = personaSelect.value;
+      if(/hello|hi|hey/i.test(normalized)) return formatAI(mem.greeting || 'Hello!');
+      if(/plan|schedule|timetable/i.test(normalized)){
+        if(p==='coach') return formatAI('Let\'s build a simple study plan: pick a subject, set 25-minute focused sessions (Pomodoro), then 5-minute breaks. Tell me the subject to start.');
+        if(p==='strict') return formatAI('Start with most difficult topic for 25 minutes. No distractions.');
+        return formatAI('I suggest 25 min study + 5 min break cycles. Which subject?');
+      }
+      if(/remember that (.+)/i.test(normalized)){
+        const m = normalized.match(/remember that (.+)/i)[1];
+        const [k,v] = m.split(/[:=]/).map(s=>s && s.trim());
+        if(k && v){ const mm = loadMemory(); mm[k]=v; saveMemory(mm); return formatAI(`Saved memory: ${k} = ${v}`);} 
+      }
+      if(/what is my role|who are you/i.test(normalized)) return formatAI(`I am DayMaster — ${mem.role||'your study assistant'}.`);
+
+      if(/export|backup memory/i.test(normalized)) return formatAI('Use the Export Memory button on the left to save a JSON backup.');
+
+      // small math eval (safe): allow simple + - * / and parentheses and digits
+      if(/^[0-9\s+\-*/().]+$/.test(normalized)){
+        try{ const res = Function('return ('+normalized+')')(); return formatAI('Answer: '+res); }catch(e){}
+      }
+
+      // fallback: echo + suggestion
+      return formatAI("I can help with planning, remembering facts, simple calculations, and quick tips. Try: /remember topic=Math, or 'plan for chemistry'.");
+    }
+
+    function handleCommand(cmd){
+      const mem = loadMemory();
+      if(cmd.startsWith('/remember ')){
+        const payload = cmd.slice(10).trim();
+        // accept key=value or key: value
+        const m = payload.match(/^([^=:\n]+)[:=]\s*(.+)$/);
+        if(m){ const k=m[1].trim(), v=m[2].trim(); mem[k]=v; saveMemory(mem); return formatAI(`Saved ${k} = ${v}`); }
+        return formatAI('Use /remember key=value');
+      }
+      if(cmd.startsWith('/recall')){
+        const parts = cmd.split(/\s+/); if(parts.length<2) return formatAI('Use /recall key');
+        const k = parts.slice(1).join(' ');
+        if(k in mem) return formatAI(`${k} = ${mem[k]}`); else return formatAI(`No memory found for '${k}'`);
+      }
+      if(cmd==='/memory') return formatAI('Open the left panel to view memory.');
+      if(cmd==='/clear-memory'){ localStorage.removeItem('daymaster_memory'); renderMemory(); return formatAI('Memory cleared.'); }
+      if(cmd==='/help') return formatAI('Commands: /remember key=value, /recall key, /memory, /clear-memory');
+      return formatAI('Unknown command. Type /help for commands.');
+    }
+
+    function formatAI(text){ return {type:'ai', text}; }
+
+    function appendMessage(obj, who='ai'){
+      const el = document.createElement('div'); el.className = 'msg '+(who==='user'?'user':'ai'); el.innerHTML = obj.text.replace(/\n/g,'<br>'); messagesEl.appendChild(el); messagesEl.scrollTop = messagesEl.scrollHeight; }
+
+    sendBtn.addEventListener('click', ()=>handleSend());
+    userInput.addEventListener('keydown', e=>{ if(e.key==='Enter') handleSend(); });
+
+    function handleSend(){ const text = userInput.value.trim(); if(!text) return; appendMessage({text}, 'user'); userInput.value=''; setTimeout(()=>{
+        const resp = daymasterRespond(text);
+        appendMessage(resp,'ai');
+      }, 120);
+    }
+
+    document.getElementById('clearChat').addEventListener('click', ()=>{ messagesEl.innerHTML=''; appendSystem('Chat cleared.'); });
+    function appendSystem(txt){ appendMessage({text:'— '+txt}, 'ai'); }
+
+    // export memory
+    document.getElementById('exportMemory').addEventListener('click', ()=>{
+      const data = JSON.stringify(loadMemory(), null, 2);
+      const blob = new Blob([data], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='daymaster_memory.json'; a.click(); URL.revokeObjectURL(url);
+      appendSystem('Memory exported.');
+    });
+
+    // import memory
+    document.getElementById('importMemoryBtn').addEventListener('click', ()=> document.getElementById('fileInput').click());
+    document.getElementById('fileInput').addEventListener('change', (e)=>{
+      const f = e.target.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=ev=>{ try{ const j=JSON.parse(ev.target.result); saveMemory(j); appendSystem('Memory imported.'); }catch(err){ appendSystem('Invalid JSON file.'); }}; reader.readAsText(f);
+    });
+
+    // load demo data
+    document.getElementById('importBtn').addEventListener('click', ()=>{ saveMemory({subject:'Math',goal:'Finish algebra chapter',pomodoros:'3'}); appendSystem('Demo memory loaded.'); });
+    document.getElementById('resetMem').addEventListener('click', ()=>{ localStorage.removeItem('daymaster_memory'); saveMemory({}); appendSystem('Memory reset.'); });
+
+    // render memory on load
+    renderMemory();
+
+    // ---- Pomodoro Timer ----
+    let pomoSeconds = 25*60; let pomoInterval;
+    const pomoDisplay = document.getElementById('pomoDisplay');
+    function updatePomo(){
+      let m = Math.floor(pomoSeconds/60), s = pomoSeconds%60;
+      pomoDisplay.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+    document.getElementById('pomoStart').onclick = ()=>{
+      if(pomoInterval) return;
+      pomoInterval = setInterval(()=>{
+        pomoSeconds--;
+        updatePomo();
+        if(pomoSeconds<=0){ clearInterval(pomoInterval); pomoInterval=null; alert('Pomodoro Complete!'); }
+      },1000);
+    };
+    document.getElementById('pomoStop').onclick = ()=>{ clearInterval(pomoInterval); pomoInterval=null; };
+    document.getElementById('pomoReset').onclick = ()=>{ pomoSeconds=25*60; updatePomo(); };
+    updatePomo();
+
+    // ---- Task List ----
+    const taskList = document.getElementById('taskList');
+    document.getElementById('addTask').onclick = ()=>{
+      const txt = document.getElementById('taskInput').value.trim();
+      if(!txt) return;
+      const li = document.createElement('li');
+      li.style.margin='6px 0';
+      li.innerHTML = `<input type='checkbox' style='margin-right:6px'> ${txt}`;
+      taskList.appendChild(li);
+      document.getElementById('taskInput').value='';
+    };
+
+    // ---- Reminders ----
+    const reminderList = document.getElementById('reminderList');
+    const reminders = [];
+    document.getElementById('addReminder').onclick = ()=>{
+      const text = reminderText.value.trim();
+      const time = reminderTime.value;
+      if(!text || !time) return;
+      reminders.push({text,time});
+      const li=document.createElement('li');
+      li.style.margin='6px 0';
+      li.textContent=`${time} — ${text}`;
+      reminderList.appendChild(li);
+      reminderText.value=''; reminderTime.value='';
+    };
+    setInterval(()=>{
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2,'0');
+      const mm = String(now.getMinutes()).padStart(2,'0');
+      reminders.forEach(r=>{
+        if(r.time===`${hh}:${mm}`){ alert(`Reminder: ${r.text}`); }
+      });
+    },60000);
+
+    // greeting
+    appendSystem('Welcome to DayMaster (web). Type /help to see commands.');
+
+    // Accessibility: ensure initial focus
+    userInput.focus();
+  </script>
+</body>
+</html>
